@@ -11,19 +11,18 @@
 
 ## Source code file
 
-[ ] Must run under GHC, version 9.10.1.
-- The datatype definitions and function signatures of the initial file must not be modified.
-- If you do not implement a version of a function asked
-in the assignment, leave it as is (i.e. as undefined).
-[ ] Must be properly commented: in each function include the type declaration, description of the goal and the meaning of the arguments.
+1. [ ] Must run under GHC, version 9.10.1.
+2. [ ] The datatype definitions and function signatures of the initial file must not be modified.
+3. [ ] If you do not implement a version of a function asked in the assignment, leave it as is (i.e. as undefined).
+4. [ ] Must be properly commented: in each function include the type declaration, description of the goal and the meaning of the arguments.
 
 ## README file
 
-[ ] Group members.
-[ ] Percentage of the contribution of each member.
-[ ] Brief description the tasks each one performed.
-[ ] Explanation for the function shortestPath, including why certain auxiliary data structures were selected, and a description of the algorithm(s) used.
-[ ] Explanation for the function travelSales, including why certain auxiliary data structures were selected, and a description of the algorithm(s) used.
+1. [ ] Group members.
+2. [ ] Percentage of the contribution of each member.
+3. [ ] Brief description the tasks each one performed.
+4. [ ] Explanation for the function shortestPath, including why certain auxiliary data structures were selected, and a description of the algorithm(s) used.
+5. [ ] Explanation for the function travelSales, including why certain auxiliary data structures were selected, and a description of the algorithm(s) used.
 
 ## Assignment
 
