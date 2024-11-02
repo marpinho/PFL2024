@@ -13,16 +13,32 @@ type Distance = Int
 type RoadMap = [(City,City,Distance)]
 
 cities :: RoadMap -> [City]
-cities = undefined -- modifiy this line to implement the solution, for each exercise not solved, leave the function definition like this
+cities roadMap = foldr addIfNotDuplicate [] roadMap -- Transverse the list and accumulate non-duplicate cities. 'nub' was not used because, presumably, it would transverse the list twice.
+    where
+        addIfNotDuplicate (city1, city2, _) acc = checkDuplicate city1 (checkDuplicate city2 acc)
+        checkDuplicate city acc
+            | city `elem` acc = acc
+            | otherwise = city : acc
 
 areAdjacent :: RoadMap -> City -> City -> Bool
-areAdjacent = undefined
+areAdjacent roadMap cityA cityB = foldr isAdjacent False roadMap -- Transverse the list and check if two cities are adjacent. 'any' could have been used as well.
+    where
+        isAdjacent (c1, c2, _) acc = ((c1 == cityA && c2 == cityB) || (c1 == cityB && c2 == cityA)) || acc
 
 distance :: RoadMap -> City -> City -> Maybe Distance
-distance = undefined
+distance roadMap cityA cityB = foldr isAdjacent Nothing roadMap -- Transverse the list and check the distance between two cities. 'find' could have been used as well.
+    where
+        isAdjacent (c1, c2, dist) acc
+            | (c1 == cityA && c2 == cityB) || (c1 == cityB && c2 == cityA) = Just dist
+            | otherwise = acc
 
 adjacent :: RoadMap -> City -> [(City,Distance)]
-adjacent = undefined
+adjacent roadMap city = foldr isAdjacent [] roadMap -- Transverse the list and check the distance for all cities connected to one other city. 'filter' could have been used as well.
+    where
+        isAdjacent (c1, c2, dist) acc
+            | c1 == city = (c2, dist) : acc
+            | c2 == city = (c1, dist) : acc -- The city may be in the first or second position
+            | otherwise  = acc
 
 pathDistance :: RoadMap -> Path -> Maybe Distance
 pathDistance = undefined
