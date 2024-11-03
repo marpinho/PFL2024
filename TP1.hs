@@ -23,6 +23,7 @@ generateAdjList roadMap = map buildAdjacency (cities roadMap)
 type AdjMatrix =  Data.Array.Array (Int, Int) (Maybe Distance)
 cityIndex :: String -> Int -- Necessary to get index out of city
 cityIndex index = read index
+
 generateAdjMatrix :: RoadMap -> AdjMatrix -- Function receives a RoadMap and returns the AdjMatrix data structure
 generateAdjMatrix roadMap = foldr updateArray adjArray cityList
     where
@@ -45,11 +46,13 @@ cities roadMap = foldr addIfNotDuplicate [] roadMap -- Transverse the list and a
             | city `elem` acc = acc
             | otherwise = city : acc
 
+-- Returns True if two cities are linked directly
 areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent roadMap cityA cityB = foldr isAdjacent False roadMap -- Transverse the list and check if two cities are adjacent. 'any' could have been used as well.
     where
         isAdjacent (c1, c2, _) acc = ((c1 == cityA && c2 == cityB) || (c1 == cityB && c2 == cityA)) || acc
 
+-- Returns a Just value with the distance between two cities connected directly
 distance :: RoadMap -> City -> City -> Maybe Distance
 distance roadMap cityA cityB = foldr isAdjacent Nothing roadMap -- Transverse the list and check the distance between two cities. 'find' could have been used as well.
     where
@@ -57,6 +60,7 @@ distance roadMap cityA cityB = foldr isAdjacent Nothing roadMap -- Transverse th
             | (c1 == cityA && c2 == cityB) || (c1 == cityB && c2 == cityA) = Just dist
             | otherwise = acc
 
+-- Returns the cities adjacent to a particular city
 adjacent :: RoadMap -> City -> [(City,Distance)]
 adjacent roadMap city = foldr isAdjacent [] roadMap -- Transverse the list and check the distance for all cities connected to one other city. 'filter' could have been used as well.
     where
@@ -65,17 +69,82 @@ adjacent roadMap city = foldr isAdjacent [] roadMap -- Transverse the list and c
             | c2 == city = (c1, dist) : acc -- The city may be in the first or second position
             | otherwise  = acc
 
+-- Returns the sum of all individual distances in a path between two cities in a Just value.
+-- If all the consecutive pairs of cities are not directly connected by roads it returns a Nothing.
 pathDistance :: RoadMap -> Path -> Maybe Distance
-pathDistance = undefined
+pathDistance _ [] = Just 0
+pathDistance _ [_] = Just 0 -- Case of having just one city
+pathDistance roadmap (cityA:cityB:rest) = 
+    case distance roadmap cityA cityB  of
+        Nothing -> Nothing
+        Just dist  -> fmap (dist +) (pathDistance roadmap (cityB:rest)) -- fmap because we are dealing with Maybe types
 
+-- Cities with the highest number of roads connecting to them (i.e. the vertices with the highest degree).
 rome :: RoadMap -> [City]
-rome = undefined
+rome roadmap =
+    let
+        allCities = cities roadmap
+        cityDegrees = [(city, length (adjacent roadmap city)) | city <- allCities]  
+        maxDegree = maximum (map snd cityDegrees) 
+    in
+        [city | (city, degree) <- cityDegrees, degree == maxDegree] -- Return cities with the maximum degree
 
+-- Returns a boolean indicating whether all the cities in the graph are connected in the roadmap 
 isStronglyConnected :: RoadMap -> Bool
-isStronglyConnected = undefined
+isStronglyConnected roadmap =
+    let allCities = cities roadmap
+    in all (\city -> canReachAll city allCities roadmap) allCities -- Pass roadmap to canReachAll
 
+-- check if a city can reach all other cities
+canReachAll :: City -> [City] -> RoadMap -> Bool
+canReachAll city allCities roadmap = 
+    length (reachable city roadmap) == length allCities 
+
+-- Returns all reachable cities from a given city 
+-- using depth-first search to check connectivity
+reachable :: City -> RoadMap -> [City]
+reachable city roadmap = 
+    dfs [city] []
+        where
+            dfs [] visited = visited -- visited tacks which cities have already been explored
+            dfs (current:queue) visited
+                | current `elem` visited = dfs queue visited  -- Sskip if already visited
+                | otherwise =
+                    let neighbors = map fst (adjacent roadmap current) -- find neighbors 
+                        newQueue = queue ++ filter (`notElem` visited) neighbors
+                    in dfs newQueue (current : visited)
+
+
+-- Returns all shortest paths between two cities 
+-- Returns an empty list if no paths exist.
 shortestPath :: RoadMap -> City -> City -> [Path]
-shortestPath = undefined
+shortestPath roadmap start end
+    | start == end = [[start]] 
+    | otherwise = getShortestPaths roadmap (bfs roadmap [(start, [start])] [] end)
+
+-- breadth-first search
+-- Receives the roadmap, the queue of paths to explore,  visited cities and end City.
+bfs :: RoadMap -> [(City, Path)] -> [City] -> City -> [Path]
+bfs _ [] _ _ = [] -- If there are no paths to explore, return an empty list
+bfs roadmap ((current, path):queue) visited end
+    | current == end = path : bfs roadmap queue visited end -- If we reach end City, include the path 
+    | otherwise =
+        let neighbors = adjacent roadmap current -- Get all adjacent cities
+            newPaths = [(adjCity, path ++ [adjCity]) | (adjCity, _) <- neighbors, not (adjCity `elem` visited)]
+            -- For each neighbor, create a new path by adding the neighbor to the current path, if it hasn't been visited
+        in bfs roadmap (queue ++ newPaths) (current : visited) end -- Keep searching with updated queue and visited
+
+
+-- Returns only the shortest paths from a list of paths
+getShortestPaths :: RoadMap -> [Path] -> [Path]
+getShortestPaths _ [] = []
+getShortestPaths roadmap paths =
+    let distances = [d | Just d <- map (pathDistance roadmap) paths]
+        minLength = minimum distances
+    in filter (\p -> case pathDistance roadmap p of
+                         Just d -> d == minLength
+                         Nothing -> False) paths
+
 
 travelSales :: RoadMap -> Path
 travelSales roadmap

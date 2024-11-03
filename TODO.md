@@ -57,7 +57,7 @@ more complicated and time inefficient.
 
 1. [ ] cities :: RoadMap -> [City], returns all the cities in the graph.
 2. [ ] areAdjacent :: RoadMap -> City -> City -> Bool, returns a boolean indicating whether two cities are linked directly.
-3. distance :: RoadMap -> City -> City -> Maybe Distance, returns a Just value with the distance between two cities connected directly, given two city names, and Nothing otherwise.
+3. [ ] distance :: RoadMap -> City -> City -> Maybe Distance, returns a Just value with the distance between two cities connected directly, given two city names, and Nothing otherwise.
 4. [ ] adjacent :: RoadMap -> City -> [(City,Distance)], returns the cities adjacent to a particular city (i.e. cities with a direct edge between them) and the respective distances to them.
 5. [ ] pathDistance :: RoadMap -> Path -> Maybe Distance, returns the sum of all individual distances in a path between two cities in a Just value, if all the consecutive pairs of cities are directly connected by roads. Otherwise, it returns a Nothing.
 6. [ ] rome :: RoadMap -> [City], returns the names of the cities with the highest number of roads connecting to them (i.e. the vertices with the highest degree).
