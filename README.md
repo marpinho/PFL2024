@@ -7,6 +7,16 @@
 | Margarida Alves Pinho | up201704599 | 50% | 5,6,7,8 |
 
 ## 2- Implementation of shortestPath function
+ This function calculates all shortest paths between two cities, utilizing BFS to explore paths and gather results.
+ 
+ - It uses Breadth-First Search (BFS) to explore paths. BFS is effective for finding the shortest paths because it examines all nearby cities first.
+ 
+ Data Structures:
+ - Queue: Manages cities to explore next.
+ - List Visited: Keeps track of explored cities to avoid repetition.
+ - Tracking: Each queue entry holds the current city and the path taken to reach it.
+
+ - After BFS finds paths to the ending city, it uses getShortestPaths to filter out and return only the shortest routes.
 
 ## 3- Implementation of travelSales function
 ### 3.1- Traveling Salesman Problem
