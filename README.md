@@ -1,10 +1,10 @@
 # PFL TP1 2024 2025
 
 ## 1- Contributors
-| Student | Student ID | Contribution |
-| -- | -- | -- |
-| Guilherme António Cerqueira Magalhães | up202005285 | 50% |
-| Margarida Alves Pinho | up201704599 | 50% |
+| Student | Student ID | Contribution | Exercises |
+| -- | -- | -- | -- |
+| Guilherme António Cerqueira Magalhães | up202005285 | 50% | 1,2,3,4,9 |
+| Margarida Alves Pinho | up201704599 | 50% | 5,6,7,8 |
 
 ## 2- Implementation of shortestPath function
 
@@ -54,7 +54,7 @@ The base case is the subset occupied by the first city only. This has a distance
 
 *Note: Infinity is defined as 'infinity = (maxBound :: Int) `div` 1000'. This is because using infinity directly caused an overflow. This is an **obviously wrong way of representing it**, that will work in most cases.*
 
-Distances to the new city are retrieved using adjacencyList. This array once is calculated using the distances function, replacing Nothing with infinity. **It does not follow the type definition provided in the project definition**. This list enables us to calculate results only once and is especially efficient with dense maps.
+Distances to the new city are retrieved using adjacencyList. This array once is calculated using the distances function, replacing Nothing with infinity. **It does not follow the type definition provided in the project definition, to avoid issues with Nothing**. This list enables us to calculate results only once and is especially efficient with dense maps.
 
 #### Return value
 The finalCost is calculated by adding the cost to return to the origin. The subset with the better cost is then selected. The path is reverse engineered using buildPath to explore the dynamic table.
