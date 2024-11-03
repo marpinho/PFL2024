@@ -1,10 +1,10 @@
 # PFL TP1 2024 2025
 
 ## 1- Contributors
-| Student | Student ID | Contribution |
-| -- | -- | -- |
-| Guilherme António Cerqueira Magalhães | up202005285 | 50% |
-| Margarida Alves Pinho | up201704599 | 50% |
+| Student | Student ID | Contribution | Exercises |
+| -- | -- | -- | -- |
+| Guilherme António Cerqueira Magalhães | up202005285 | 50% | 1,2,3,4,9 |
+| Margarida Alves Pinho | up201704599 | 50% | 5,6,7,8 |
 
 ## 2- Implementation of shortestPath function
 
@@ -33,3 +33,28 @@ The goal of the recursive step is to find which city is 'cheapest' to add to the
 The distance of a city to itself has cost 0 (first step). In the last step we will calculate the cost to loop back around to the path origin.
 
 ### 3.2- Implementation
+We implemented TSP in the travelSales function.
+
+#### States and the Dynamic Table
+As previously mentioned each state can be represented as:
+- A Set of visited cities, which can be represented using a bitmask.
+- The current city, which can be represented as an integer
+
+The use of bitmasking in this solution is very space efficient, as it occupies as little space as possible (each city is 1 bit). The following code snippets can be used to facilitate interaction:
+- (1 \Data.Bits.shiftL` city)` to represent a set with only 1 city (1 bit in the cities position)
+- Data.Bits.testBit to check if a city is in a set
+- Data.Bits.clearBit to remove a city from a set
+
+States can be stored in a 2D Array, where the subset bitmask is one dimension and the current city integer is another. This bitmask can be interpreted as an integer.
+
+#### Recursion
+The recursive function is started when populating the table. Each cell will be populated with either infinity or a value acquired through finding a valid path. This happens in the calculateSubset function.
+
+The base case is the subset occupied by the first city only. This has a distance of 0. Any invalid subset (doesn't contain origin city or end city) is given a distance of infinity.
+
+*Note: Infinity is defined as 'infinity = (maxBound :: Int) `div` 1000'. This is because using infinity directly caused an overflow. This is an **obviously wrong way of representing it**, that will work in most cases.*
+
+Distances to the new city are retrieved using adjacencyList. This array once is calculated using the distances function, replacing Nothing with infinity. **It does not follow the type definition provided in the project definition, to avoid issues with Nothing**. This list enables us to calculate results only once and is especially efficient with dense maps.
+
+#### Return value
+The finalCost is calculated by adding the cost to return to the origin. The subset with the better cost is then selected. The path is reverse engineered using buildPath to explore the dynamic table.
