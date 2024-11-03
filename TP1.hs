@@ -1,6 +1,6 @@
---import qualified Data.List
+import qualified Data.List
 import qualified Data.Array
---import qualified Data.Bits
+import qualified Data.Bits
 
 -- PFL 2024/2025 Practical assignment 1
 
@@ -17,23 +17,23 @@ type RoadMap = [(City,City,Distance)]
 type AdjList = [(City, [(City, Distance)])]
 generateAdjList :: RoadMap -> AdjList -- Function receives a RoadMap and returns the AdjList data structure
 generateAdjList roadMap = map buildAdjacency (cities roadMap)
-  where
-    buildAdjacency city = (city, adjacent roadMap city) -- Uses function to generate row
+    where
+        buildAdjacency city = (city, adjacent roadMap city) -- Uses function to generate row
 
 type AdjMatrix =  Data.Array.Array (Int, Int) (Maybe Distance)
 cityIndex :: String -> Int -- Necessary to get index out of city
 cityIndex index = read index
 generateAdjMatrix :: RoadMap -> AdjMatrix -- Function receives a RoadMap and returns the AdjMatrix data structure
 generateAdjMatrix roadMap = foldr updateArray adjArray cityList
-  where
-    -- 1) Setup Empty Array -> every cell contains Nothing
-    cityList = cities roadMap
-    arrayLength = length cityList
-    arrayBounds = ((0, 0), (arrayLength - 1, arrayLength - 1))
-    adjArray = Data.Array.array arrayBounds [((i, j), Nothing) | i <- [0..arrayLength-1], j <- [0..arrayLength-1]]
-    -- 2) Transverse the adjacency list to update the array
-    updateArray city acc = foldr (updateRow city) acc (adjacent roadMap city)
-    updateRow city (adjCity, dist) acc = acc Data.Array.//  [((cityIndex city, cityIndex adjCity), Just dist)]
+    where
+        -- 1) Setup Empty Array -> every cell contains Nothing
+        cityList = cities roadMap
+        arrayLength = length cityList
+        arrayBounds = ((0, 0), (arrayLength - 1, arrayLength - 1))
+        adjArray = Data.Array.array arrayBounds [((i, j), Nothing) | i <- [0..arrayLength-1], j <- [0..arrayLength-1]]
+        -- 2) Transverse the adjacency list to update the array
+        updateArray city acc = foldr (updateRow city) acc (adjacent roadMap city)
+        updateRow city (adjCity, dist) acc = acc Data.Array.//  [((cityIndex city, cityIndex adjCity), Just dist)]
 
 -- Functions
 
@@ -78,7 +78,36 @@ shortestPath :: RoadMap -> City -> City -> [Path]
 shortestPath = undefined
 
 travelSales :: RoadMap -> Path
-travelSales = undefined
+travelSales roadmap
+    | not (5==5) = [] -- True, leave as is
+    | otherwise = let cityList = cities roadmap
+                      cityIndices = Data.Array.listArray (0, listLength - 1) cityList
+                      infinity = maxBound :: Int -- Infinity: couldn't get Nothing to work to represent this idea
+                      distances = Data.Array.array ((0, 0), (listLength - 1, listLength - 1))
+                          [((i, j), maybe infinity id (distance roadmap (cityIndices Data.Array.! i) (cityIndices Data.Array.! j)))
+                          | i <- [0..listLength-1], j <- [0..listLength-1]] -- Setting up Adjacency Table
+                      listLength = length cityList
+                      fullSet = (1 `Data.Bits.shiftL` listLength) - 1 :: Int -- Bitmask representing all cities
+                      -- Recursion is started by filling in the dynamic table
+                      tableBounds = ((0,0), (fullSet, listLength-1))
+                      dynamicTable = Data.Array.array tableBounds [((subset, city), calculateSubset subset city) | subset <- [0..fullSet], city <- [0..listLength-1]] :: Data.Array.Array (Int, Int) Distance    
+                      calculateSubset subset city
+                          | subset == (1 `Data.Bits.shiftL` city) = if city == 0 then 0 else infinity -- Base Case or unreachable set
+                          | Data.Bits.testBit subset city = minimum [dynamicTable Data.Array.! (Data.Bits.clearBit subset city :: Int, previousCity) -- Calculate subset ending in previousCity
+                              + distances Data.Array.! (previousCity, city) -- Add distance to current city
+                              | previousCity <- [0..listLength-1], previousCity /= city, Data.Bits.testBit subset previousCity] -- Previous City cannot be city itself and must be in subset
+                          | otherwise = infinity -- Invalid Subset
+                      
+                      -- Extracting the best path
+                      finalCost = minimum [dynamicTable Data.Array.! (fullSet, city) + distances Data.Array.! (city, 0) | city <- [1..listLength-1]]
+                      buildPath set city path
+                          | set == (1 `Data.Bits.shiftL` city) = reverse (cityIndices Data.Array.! city : path)
+                          | otherwise = let previousCity = Data.List.minimumBy (\i j -> compare (dynamicTable Data.Array.! (Data.Bits.clearBit set city, i) + distances Data.Array.! (i, city))
+                                              (dynamicTable Data.Array.! (Data.Bits.clearBit set city, j) + distances Data.Array.! (j, city)))
+                                              [i | i <- [0..listLength-1], i /= city, Data.Bits.testBit set i]
+                              in buildPath (Data.Bits.clearBit set city) previousCity (cityIndices Data.Array.! city : path)
+                      
+                  in if finalCost == infinity then [] else buildPath fullSet 0 []
 
 tspBruteForce :: RoadMap -> Path
 tspBruteForce = undefined -- only for groups of 3 people; groups of 2 people: do not edit this function
