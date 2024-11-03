@@ -1,5 +1,15 @@
 # PFL TP1 2024 2025
-## Traveling Salesman Problem
+
+## 1- Contributors
+| Student | Student ID | Contribution |
+| -- | -- | -- |
+| Guilherme António Cerqueira Magalhães | up202005285 | 50% |
+| Margarida Alves Pinho | up201704599 | 50% |
+
+## 2- Implementation of shortestPath function
+
+## 3- Implementation of travelSales function
+### 3.1- Traveling Salesman Problem
 The dynamic programming solution to the Traveling Salesman Problem (TSP) is the **Held-Karp Algorithm**. This algorithm ensures that we get to the optimal solution and, given that TSP is a NP-Hard problem, has exponential time complexity: O(2^n*n^2). It is not as inneficient as a brute force O(n!) solution because it stores intermediate results to avoid redundant calculations.
 
 *Note: If two vertices are not connected, we can assume distance between the two is infinite. Due to the Problem Definition we represented it as 'Nothing'.*
@@ -22,9 +32,4 @@ The goal of the recursive step is to find which city is 'cheapest' to add to the
  
 The distance of a city to itself has cost 0 (first step). In the last step we will calculate the cost to loop back around to the path origin.
 
-
-## Contributors
-|    |    |
-| -- | -- |
-| Guilherme António Cerqueira Magalhães | up202005285 |
-| Margarida Alves Pinho | up201704599 |
+### 3.2- Implementation

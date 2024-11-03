@@ -1,5 +1,5 @@
 --import qualified Data.List
---import qualified Data.Array
+import qualified Data.Array
 --import qualified Data.Bits
 
 -- PFL 2024/2025 Practical assignment 1
@@ -11,6 +11,31 @@ type Path = [City]
 type Distance = Int
 
 type RoadMap = [(City,City,Distance)]
+
+-- Advanced Data Types
+-- The same strategy was used for both the adj list and array: get all cities, get adjancencies for each, update data
+type AdjList = [(City, [(City, Distance)])]
+generateAdjList :: RoadMap -> AdjList -- Function receives a RoadMap and returns the AdjList data structure
+generateAdjList roadMap = map buildAdjacency (cities roadMap)
+  where
+    buildAdjacency city = (city, adjacent roadMap city) -- Uses function to generate row
+
+type AdjMatrix =  Data.Array.Array (Int, Int) (Maybe Distance)
+cityIndex :: String -> Int -- Necessary to get index out of city
+cityIndex index = read index
+generateAdjMatrix :: RoadMap -> AdjMatrix -- Function receives a RoadMap and returns the AdjMatrix data structure
+generateAdjMatrix roadMap = foldr updateArray adjArray cityList
+  where
+    -- 1) Setup Empty Array -> every cell contains Nothing
+    cityList = cities roadMap
+    arrayLength = length cityList
+    arrayBounds = ((0, 0), (arrayLength - 1, arrayLength - 1))
+    adjArray = Data.Array.array arrayBounds [((i, j), Nothing) | i <- [0..arrayLength-1], j <- [0..arrayLength-1]]
+    -- 2) Transverse the adjacency list to update the array
+    updateArray city acc = foldr (updateRow city) acc (adjacent roadMap city)
+    updateRow city (adjCity, dist) acc = acc Data.Array.//  [((cityIndex city, cityIndex adjCity), Just dist)]
+
+-- Functions
 
 cities :: RoadMap -> [City]
 cities roadMap = foldr addIfNotDuplicate [] roadMap -- Transverse the list and accumulate non-duplicate cities. 'nub' was not used because, presumably, it would transverse the list twice.
