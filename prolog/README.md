@@ -1,15 +1,25 @@
 ## Game Details
-Each player in *Blütentanz* has five pieces and the goal of crossing the board with at least four (they must reach the board's border). The board has sixteen discs with 4 slots each:
-- one only accessible to the Blue Player
-- one only accessible to the orange Player
-- one accessible to both Players
-- one innacessible to both Players
+
+- in *Blütentanz*, you want to lead your figures to reach your opponent's side of the field.
+
+- To set up the game, sixteen discs are placed onto the game board at random; Each disc has 4 slots:
+    - blue, only accessible to the Blue Player
+    - orange, only accessible to the Orange Player
+    - gray, accessible to both Players
+    - null, innacessible to both Players
+
+- Your goal is to move four of your five figures off the edge of the game board near your opponent. Whoever does this first wins.
 
 On a turn each player must:
-- rotate all the tiles in a row or column 90º, with any player figures on those tiles rotating as well.
-- add a piece to the board (at the back row) or move a pieces orthogonaly three times
+- First choose a row or column and rotate all its tiles 90º, with any player figures on those tiles rotating as well.
+- Next, you have up to three movement points that you can use on 1-3 of your figures. You can:
+    - place a figure on the accessible places of your edge of the board. 
+    - keep moving a figure orthogonally to accessible places.
 
 More details are available in [Board Game Geek](https://boardgamegeek.com/boardgame/428363/blutentanz). No extra installations are required.
+
+
+
 
 ## Game State Representation
 A Board is a list of 16 independent Disks organized in a 4x4 square. These disks have four positions (which we refer to as squares in the code, even though a disk is circular): Top Left, Top Right, Bottom Left, Bottom Right. The disks can rotate 90º clockwise, shuffling the order of its squares.
