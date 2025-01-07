@@ -176,7 +176,7 @@ handle_action_choice(1, Player, MovesLeft, Pieces, Board, UpdatedPieces, Remaini
     RemainingMoves is MovesLeft - 1.
 handle_action_choice(2, Player, MovesLeft, Pieces, Board, UpdatedPieces, RemainingMoves) :-
     prompt_piece_selection(Player, Pieces, SelectedPiece),
-    prompt_movement_action(Player, SelectedPiece, Pieces, Board, MovesLeft, UpdatedPieces, RemainingMoves),
+    prompt_movement_action(Player, SelectedPiece, Pieces, Board, MovesLeft, UpdatedPieces, RemainingMoves).
 
 handle_action_choice(_, Player, MovesLeft, Pieces, Board, UpdatedPieces, _) :-
     write('Invalid choice. Try again.'), nl,
