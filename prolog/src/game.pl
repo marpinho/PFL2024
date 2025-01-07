@@ -116,8 +116,8 @@ handle_second_outcome(game_over(Winner),_ ,_) :-
 
 % Validate and apply move
 validate_and_apply_move(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft), Move) :-
-    valid_moves(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft), Moves),
-    member(Move, Moves),
+    %valid_moves(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft), Moves),
+    %member(Move, Moves),
     move(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft), Move, NewGameState),
     game_cycle(NewGameState).
 validate_and_apply_move(GameState, _) :-
@@ -141,12 +141,12 @@ prompt_rotation(Player, Rotation) :-
 % Handle rotation type selection
 handle_rotation_type(1, Player, row(Index)) :-
     write(Player), write(', enter the row number (1-4) to rotate: '), nl,
-    read(Index),
-    validate_rotation(Index).
+    read(Index).
+    %validate_rotation(Index).
 handle_rotation_type(2, Player, col(Index)) :-
     write(Player), write(', enter the column number (1-4) to rotate: '), nl,
-    read(Index),
-    validate_rotation(Index).
+    read(Index).
+    %validate_rotation(Index).
 handle_rotation_type(_, Player, Rotation) :-
     write('Invalid choice. Try again.'), nl,
     prompt_rotation(Player, Rotation).
