@@ -13,7 +13,7 @@ valid_square(Board, Player, Row, Col, Position, Pieces) :-
     nth1(Row, Board, RowList),                   % Extract the Row
     nth1(Col, RowList, Disc),                    % Extract the Disc at Column
     square_accessible(Disc, Player, Position),   % Check if the Position is accessible
-    not(piece_occupying_position(Pieces, Row, Col, Position)).  % Ensure no piece is occupying the position.
+    \+ piece_occupying_position(Pieces, Row, Col, Position).  % Ensure no piece is occupying the position.
 
 % piece_occupying_position(+Pieces, +Row, +Col, +Position)
 % Checks if there is a piece occupying the given position.
@@ -34,10 +34,8 @@ square_accessible(disc(_, _, _, Position4), Player, bottomRight) :-
 % accessible(+SquareType, +Player)
 % Determines if a square type is accessible to the player.
 accessible(neutral, _).                     % Neutral squares are accessible to all players.
-accessible(player1Exclusive, Player1) :-    % Exclusive squares for Player1.
-    game_state(_, _, Player1, _, _).
-accessible(player2Exclusive, Player2) :-    % Exclusive squares for Player2.
-    game_state(_, _, Player2, _, _).
+accessible(player1Exclusive, Player1).      % Exclusive squares for Player1.
+accessible(player2Exclusive, Player2).      % Exclusive squares for Player2.
 accessible(_, _) :- fail.                   % Other types are inaccessible.
 
 % section_blossom_type(+Section, +TL, +TR, +BL, +BR, -BlossomType)

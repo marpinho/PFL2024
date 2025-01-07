@@ -4,6 +4,7 @@
 :- [execution].
 :- use_module(library(lists)).
 
+
 /*
  initial_state(+GameConfig, -GameState)
  display_game(+GameState)
@@ -22,7 +23,7 @@ play :-
 	write('1. Human vs. Human'),nl,
 	write('2. Human vs. Computer'),nl,
 	write('3. Computer vs. Computer'),nl,
-	write('0. Quit').    
+	write('0. Quit'),  
     read(GameMode),
     GameMode < 4,
     start(GameMode).
@@ -62,6 +63,11 @@ game_cycle(game_config(Player1, Player2), game_state(Board, Pieces, CurrentPlaye
     display_game(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft)),
     game_outcome(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft), Outcome),
     handle_outcome(Outcome, game_config(Player1, Player2), game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft)).
+
+game_cycle(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft)) :-
+    display_game(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft)),
+    game_outcome(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft), Outcome),
+    handle_outcome(Outcome, game_config(player1, player2), game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft)).
 
 /* END CONDITIONS*/
 

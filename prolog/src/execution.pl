@@ -1,6 +1,5 @@
-
 % Execute move
-move(game_state(Board, Pieces, CurrentPlayer, rotate, MovesLeft), move(rotation, Index), game_state(NewBoard, NewPieces, CurrentPlayer, move, 3)) :-
+move(game_state(Board, Pieces, CurrentPlayer, rotate, MovesLeft), move(rotation, row(Index)), game_state(NewBoard, Pieces, CurrentPlayer, move, 3)) :-
     rotate_row(Board, Index, NewBoard, OldPieces, NewPieces).
 move(game_state(Board, Pieces, CurrentPlayer, move, MovesLeft), move(movement, Piece, Path), game_state(Board, NewPieces, CurrentPlayer, move, NewMovesLeft)) :-
     rotate_column(Board, Index, NewBoard, OldPieces, NewPieces).
@@ -11,7 +10,7 @@ move(game_state(Board, Pieces, CurrentPlayer, move, MovesLeft), move(movement, P
 % Rotate a row or column and update the game state
 rotate_row(Board, Index, NewBoard, OldPieces, NewPieces) :-
     nth1(Index, Board, Row),
-    maplist(update_disk_and_pieces, Row, RotatedRow, OldPieces, NewPieces),
+    update_disk_and_pieces(Row, RotatedRow, OldPieces, NewPieces),
     replace_row(Board, Index, RotatedRow, NewBoard).
 
 % Rotate a column and update all the pieces affected by the rotation
@@ -22,8 +21,8 @@ rotate_column(Board, Index, NewBoard, OldPieces, NewPieces) :-
 
 % Rotate a single disk and update the positions of pieces present on it.
 update_disk_and_pieces(OldDisk, RotatedDisk, OldPieces, UpdatedPieces) :-
-    rotate_disk(OldDisk, RotatedDisk),
-    update_pieces_on_disk(OldDisk, RotatedDisk, OldPieces, UpdatedPieces).
+    rotate_disk(OldDisk, RotatedDisk).
+    %update_pieces_on_disk(OldDisk, RotatedDisk, OldPieces, UpdatedPieces).
 
 
 rotate_disk([TL, TR, BL, BR], [BL, TL, BR, TR]).
