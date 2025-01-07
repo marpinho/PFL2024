@@ -1,13 +1,3 @@
-/*
-* menu_game_mode
-* Imprime as opções de modo de jogo
-*/
-menu_game_mode :-
-	nl,write('Choose the game mode: '),nl,nl,
-	write('1. Human vs. Human'),nl,
-	write('2. Human vs. Computer'),nl,
-	write('3. Computer vs. Computer'),nl,
-	write('0. Quit').
 
 /*
 * display_game(+GameState)

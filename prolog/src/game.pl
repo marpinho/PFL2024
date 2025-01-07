@@ -5,71 +5,78 @@
 :- use_module(library(lists)).
 
 /*
-* play
-* start with game menu
+ initial_state(+GameConfig, -GameState)
+ display_game(+GameState)
+ move(+GameState, +Move, -NewGameState).
+ valid_moves(+GameState, -ListOfMoves).
+ game_over(+GameState, -Winner)
+ value(+GameState, +Player, -Value)
+ choose_move(+GameState, +Level, -Move)
 */
+
+/* MENU SYSTEM */
+
 play :-
     write('Welcome to Blütentanz!'), nl,
-    menu_game_mode, nl,
+	nl,write('Choose the game mode: '),nl,nl,
+	write('1. Human vs. Human'),nl,
+	write('2. Human vs. Computer'),nl,
+	write('3. Computer vs. Computer'),nl,
+	write('0. Quit').    
     read(GameMode),
     GameMode < 4,
     start(GameMode).
 
 start(0) :-
     abort.
-
 start(1) :- 
-    setup_game(player1, player2).
-
+    initial_state(game_config(player1, player2), InitialState).
 start(2) :- 
     write('Select AI difficulty (1: Easy, 2: Medium): '), nl,
     read(Difficulty),
-    setup_game(player, ai(Difficulty)).
-
+    initial_state(game_config(player, ai(Difficulty)), InitialState).
 start(3) :- 
     write('Select AI difficulty for Player 1 (1: Easy, 2: Medium): '), nl,
     read(Difficulty1),
     write('Select AI difficulty for Player 2 (1: Easy, 2: Medium): '), nl,
     read(Difficulty2),
-    setup_game(ai1-(Difficulty1), ai2-(Difficulty2)).
-
+    initial_state(game_config(ai1(Difficulty1), ai2(Difficulty2)), InitialState).
 start(_) :-
     nl, write('--INVALID INPUT--Please try again. '), nl,
     play.
 
-% Setup and start the game
-setup_game(Player1, Player2) :-
-    initial_state(game_config(Player1, Player2), InitialState),
-    game_cycle(InitialState).
+/* BASIC SETUP */
+    % game_config(+Player1, +Player2)
+    % game_state(+Board, +Pieces, +CurrentPlayer, +CurrentStage , +MovesLeft )
 
-% Initial state setup
-initial_state(game_config(Player1, Player2), game_state(Board, Pieces, Player1, rotate, 3, Player1, Player2)) :-
+initial_state(game_config(Player1, Player2), game_state(Board, Pieces, Player1, rotate, 3)) :-
     sample_board(Board),
-    sample_pieces(Pieces).
+    sample_pieces(Pieces),
+    game_cycle(game_config(Player1, Player2), game_state(Board, Pieces, Player1, rotate, 3)).
 
-% Game cycle
+/* GAME LOOP */
+
 % Handles the turn-based game loop
 % Updates the game state until the game is over
-game_cycle(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft, Player1, Player2)) :-
+game_cycle(game_config(Player1, Player2), game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft)) :-
     display_game(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft)),
-    game_outcome(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft, Player1, Player2), Outcome),
-    handle_outcome(Outcome, game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft, Player1, Player2)).
+    game_outcome(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft), Outcome),
+    handle_outcome(Outcome, game_config(Player1, Player2), game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft)).
+
+/* END CONDITIONS*/
 
 % Determine game outcome
-game_outcome(game_state(_, Pieces, _, _, _, Player1, Player2), game_over(Winner)) :-
-    game_over(game_state(_, Pieces, _, _, _, Player1, Player2), Winner),
+game_outcome(game_state(_, Pieces, _, _, _), game_over(Winner)) :-
+    game_over(game_state(_, Pieces, _, _, _), Winner),
     Winner \= none.
-game_outcome(game_state(_, _, CurrentPlayer, _, _, _, _), continue(CurrentPlayer)).
+game_outcome(game_state(_, _, CurrentPlayer, _, _), continue(CurrentPlayer)).
 
 % Check if the game is over
 % game_over(+GameState, -Winner)
-game_over(game_state(_, Pieces, _, _, _, Player1, _), Winner) :-
-    pieces_on_opponent_side(Pieces, Player1),
-    Winner = Player1.
-game_over(game_state(_, Pieces, _, _, _, _, Player2), Winner) :-
-    pieces_on_opponent_side(Pieces, Player2),
-    Winner = Player2.
+game_over(game_state(_, Pieces, CurrentPlayer, _, _), CurrentPlayer) :-
+    pieces_on_opponent_side(Pieces, CurrentPlayer).
 game_over(_, none).
+
 
 % Check if all pieces are on the opponents side
 pieces_on_opponent_side(Pieces, Player) :-
@@ -77,24 +84,45 @@ pieces_on_opponent_side(Pieces, Player) :-
     length(OffBoardPieces, Count),
     Count >= 4.
 
-
-% Handle game outcome
-% Case it ends
-handle_outcome(game_over(Winner), _) :-
+handle_outcome(game_over(Winner), _, _) :-
     format('Game Over! Winner: ~w~n', [Winner]).
 
-handle_outcome(continue(CurrentPlayer), game_state(Board, Pieces, CurrentPlayer, rotate, MovesLeft, Player1, Player2)) :-
-    prompt_rotation(CurrentPlayer, Rotation),
-    validate_and_apply_move(game_state(Board, Pieces, CurrentPlayer, rotate, MovesLeft, Player1, Player2), move(rotation, Rotation)).
+/* PLAY*/
 
-handle_outcome(continue(CurrentPlayer), game_state(Board, Pieces, CurrentPlayer, move, MovesLeft, Player1, Player2)) :-
+handle_outcome(continue(CurrentPlayer), _, game_state(Board, Pieces, CurrentPlayer, rotate, MovesLeft)) :-
+    prompt_rotation(CurrentPlayer, Rotation),
+    validate_and_apply_move(game_state(Board, Pieces, CurrentPlayer, rotate, MovesLeft), move(rotation, Rotation)).
+
+handle_outcome(continue(CurrentPlayer), game_config(Player1, Player2), game_state(Board, Pieces, CurrentPlayer, move, MovesLeft)) :-
     prompt_movement(CurrentPlayer, MovesLeft, Pieces, Board, UpdatedPieces),
-    switch_player(CurrentPlayer, Player1, Player2, NextPlayer),
-    game_cycle(game_state(Board, UpdatedPieces, NextPlayer, rotate, 3, Player1, Player2)).
+    game_outcome(game_state(Board, UpdatedPieces, CurrentPlayer, _, MovesLeft), Outcome),
+    handle_second_outcome(Outcome, game_config(Player1, Player2), game_state(Board, UpdatedPieces, CurrentPlayer, _, _)).
+
+handle_second_outcome(continue(CurrentPlayer), game_config(Player1, Player2), game_state(Board, Pieces, CurrentPlayer, _, _)) :-
+    switch_player(CurrentPlayer, game_config(Player1, Player2), NextPlayer),
+    game_cycle(game_state(Board, Pieces, NextPlayer, rotate, 3)).
+
+    
+handle_second_outcome(game_over(Winner),_ ,_) :-
+    format('Game Over! Winner: ~w~n', [Winner]).
+
+
+
+% Validate and apply move
+validate_and_apply_move(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft), Move) :-
+    valid_moves(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft), Moves),
+    member(Move, Moves),
+    move(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft), Move, NewGameState),
+    game_cycle(NewGameState).
+validate_and_apply_move(GameState, _) :-
+    write('Invalid move. Try again.'), nl,
+    game_cycle(GameState).
 
 % Switch player based on game state
-switch_player(CurrentPlayer, Player1, Player2, NextPlayer) :-
+switch_player(CurrentPlayer,game_config(Player1, Player2), NextPlayer) :-
     (CurrentPlayer = Player1 -> NextPlayer = Player2 ; NextPlayer = Player1).
+
+/* ROTATION */
 
 % Prompt for rotation
 prompt_rotation(Player, Rotation) :-
@@ -125,6 +153,8 @@ validate_rotation(col(Index)) :-
 validate_rotation(_) :-
     write('Invalid row or column. Must be between 1 and 4.'), nl, fail.
 
+/* MOVEMENT ACTIONS */
+
 % Prompt for movement actions
 prompt_movement(_, 0, Pieces, _, Pieces) :-
     write('No movement points left. Ending turn.'), nl.
@@ -147,6 +177,8 @@ handle_action_choice(_, Player, MovesLeft, Pieces, Board, UpdatedPieces, _) :-
     write('Invalid choice. Try again.'), nl,
     prompt_movement(Player, MovesLeft, Pieces, Board, UpdatedPieces).
 
+/* PLACE A NEW PIECE */
+
 % Prompt for placing a new piece
 prompt_place_piece(Player, Pieces, Board, UpdatedPieces) :-
     write('Enter the row to place your piece: '), nl,
@@ -164,6 +196,9 @@ handle_place_piece_validation(true, Player, Pieces, Row, Col, Position, _, Updat
 handle_place_piece_validation(false, Player, Pieces, _, _, _, Board, UpdatedPieces) :-
     write('Invalid position. Try again.'), nl,
     prompt_place_piece(Player, Pieces, Board, UpdatedPieces).
+
+
+/* MOVE A PLACED PIECE */
 
 % Prompt for selecting a piece
 prompt_piece_selection(Player, Pieces, SelectedPiece) :-
@@ -192,7 +227,6 @@ prompt_movement_action(Player, piece(Player, Row, Col, Position), Pieces, Board,
     validate_movement_action(Player, Board, Row, Col, Direction, IsValid),
     handle_direction_validation(IsValid, Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, Direction, UpdatedPieces, NewMovesLeft).
 
-
 % Display available directions
 display_directions([]) :-
     write('No valid directions available.'), nl.
@@ -201,20 +235,11 @@ display_directions([Dir|Dirs]) :-
     display_directions(Dirs).
 
 % Handle validation for movement direction
-handle_direction_validation(true, Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, Direction, game_state(Board, UpdatedPieces, Player, move, NewMovesLeft, Player1, Player2)) :-
-    move_piece(game_state(Board, Pieces, Player, move, MovesLeft, Player1, Player2), piece(Player, Row, Col, Position), [Direction], game_state(Board, UpdatedPieces, Player, move, NewMovesLeft, Player1, Player2)).
+handle_direction_validation(true, Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, Direction, game_state(Board, UpdatedPieces, Player, move, NewMovesLeft)) :-
+    move_piece(game_state(Board, Pieces, Player, move, MovesLeft), piece(Player, Row, Col, Position), [Direction], game_state(Board, UpdatedPieces, Player, move, NewMovesLeft)).
 
-handle_direction_validation(false, Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, _, game_state(Board, Pieces, Player, move, MovesLeft, Player1, Player2)) :-
+handle_direction_validation(false, Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, _, game_state(Board, Pieces, Player, move, MovesLeft)) :-
     write('Invalid move. Try again.'), nl,
-    prompt_movement_action(Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, game_state(Board, Pieces, Player, move, MovesLeft, Player1, Player2)).
+    prompt_movement_action(Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, game_state(Board, Pieces, Player, move, MovesLeft)).
 
 
-% Validate and apply move
-validate_and_apply_move(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft, Player1, Player2), Move) :-
-    valid_moves(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft, Player1, Player2), Moves),
-    member(Move, Moves),
-    execute_move(game_state(Board, Pieces, CurrentPlayer, Phase, MovesLeft, Player1, Player2), Move, NewGameState),
-    game_cycle(NewGameState).
-validate_and_apply_move(GameState, _) :-
-    write('Invalid move. Try again.'), nl,
-    game_cycle(GameState).
