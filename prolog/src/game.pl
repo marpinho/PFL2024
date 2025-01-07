@@ -21,8 +21,8 @@ play :-
     write('Welcome to Blütentanz!'), nl,
 	nl,write('Choose the game mode: '),nl,nl,
 	write('1. Human vs. Human'),nl,
-	write('2. Human vs. Computer'),nl,
-	write('3. Computer vs. Computer'),nl,
+	%write('2. Human vs. Computer'),nl,
+	%write('3. Computer vs. Computer'),nl,
 	write('0. Quit'),  
     read(GameMode),
     GameMode < 4,
@@ -51,8 +51,8 @@ start(_) :-
     % game_state(+Board, +Pieces, +CurrentPlayer, +CurrentStage , +MovesLeft )
 
 initial_state(game_config(Player1, Player2), game_state(Board, Pieces, Player1, rotate, 3)) :-
-    sample_board(Board),
-    sample_pieces(Pieces),
+    generate_board(Board),
+    initialize_pieces(Pieces),
     game_cycle(game_config(Player1, Player2), game_state(Board, Pieces, Player1, rotate, 3)).
 
 /* GAME LOOP */
@@ -142,19 +142,17 @@ prompt_rotation(Player, Rotation) :-
 handle_rotation_type(1, Player, row(Index)) :-
     write(Player), write(', enter the row number (1-4) to rotate: '), nl,
     read(Index),
-    validate_rotation(row(Index)).
+    validate_rotation(Index).
 handle_rotation_type(2, Player, col(Index)) :-
     write(Player), write(', enter the column number (1-4) to rotate: '), nl,
     read(Index),
-    validate_rotation(col(Index)).
+    validate_rotation(Index).
 handle_rotation_type(_, Player, Rotation) :-
     write('Invalid choice. Try again.'), nl,
     prompt_rotation(Player, Rotation).
 
 % Validate rotation input
-validate_rotation(row(Index)) :-
-    Index >= 1, Index =< 4.
-validate_rotation(col(Index)) :-
+validate_rotation(Index) :-
     Index >= 1, Index =< 4.
 validate_rotation(_) :-
     write('Invalid row or column. Must be between 1 and 4.'), nl, fail.
@@ -174,11 +172,12 @@ prompt_movement(Player, MovesLeft, Pieces, Board, UpdatedPieces) :-
 
 % Handle action choice
 handle_action_choice(1, Player, MovesLeft, Pieces, Board, UpdatedPieces, RemainingMoves) :-
-    prompt_place_piece(Player, Pieces, Board, UpdatedPieces),
+    prompt_place_piece(Player, Pieces, Board, UpdatedPieces, MovesLeft),
     RemainingMoves is MovesLeft - 1.
 handle_action_choice(2, Player, MovesLeft, Pieces, Board, UpdatedPieces, RemainingMoves) :-
     prompt_piece_selection(Player, Pieces, SelectedPiece),
-    prompt_movement_action(Player, SelectedPiece, Pieces, Board, MovesLeft, UpdatedPieces, RemainingMoves).
+    prompt_movement_action(Player, SelectedPiece, Pieces, Board, MovesLeft, UpdatedPieces, RemainingMoves),
+
 handle_action_choice(_, Player, MovesLeft, Pieces, Board, UpdatedPieces, _) :-
     write('Invalid choice. Try again.'), nl,
     prompt_movement(Player, MovesLeft, Pieces, Board, UpdatedPieces).
@@ -186,7 +185,7 @@ handle_action_choice(_, Player, MovesLeft, Pieces, Board, UpdatedPieces, _) :-
 /* PLACE A NEW PIECE */
 
 % Prompt for placing a new piece
-prompt_place_piece(Player, Pieces, Board, UpdatedPieces) :-
+prompt_place_piece(Player, Pieces, Board, UpdatedPieces, MovesLeft) :-
     write('Enter the row to place your piece: '), nl,
     read(Row),
     write('Enter the column to place your piece: '), nl,
@@ -194,15 +193,13 @@ prompt_place_piece(Player, Pieces, Board, UpdatedPieces) :-
     write('Enter the position on the disc (e.g., topLeft, bottomRight): '), nl,
     read(Position),
     validate_starting_position(Player, Board, Row, Col, Position, Pieces, IsValid),
-    handle_place_piece_validation(IsValid, Player, Pieces, Row, Col, Position, Board, UpdatedPieces).
+    handle_place_piece_validation(IsValid, Player, Pieces, Row, Col, Position, Board, UpdatedPieces, MovesLeft).
 
 % Handle place piece validation
-handle_place_piece_validation(true, Player, Pieces, Row, Col, Position, _, UpdatedPieces) :-
+handle_place_piece_validation(true, Player, Pieces, Row, Col, Position, _, UpdatedPieces, MovesLeft) :-
     place_piece(Player, Row, Col, Position, Pieces, UpdatedPieces).
-handle_place_piece_validation(false, Player, Pieces, _, _, _, Board, UpdatedPieces) :-
-    write('Invalid position. Try again.'), nl,
-    prompt_place_piece(Player, Pieces, Board, UpdatedPieces).
-
+handle_place_piece_validation(false, Player, Pieces, _, _, _, Board, UpdatedPieces, MovesLeft) :-
+    write('Invalid. Try again.').
 
 /* MOVE A PLACED PIECE */
 
@@ -226,26 +223,17 @@ validate_piece_selection(Player, Pieces, _, _, _, SelectedPiece) :-
 
 % Prompt for movement action
 prompt_movement_action(Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, UpdatedPieces, NewMovesLeft) :-
-    write('Select a direction to move the piece:'), nl,
-    findall(Direction, valid_square(Board, Player, Row, Col, Direction, Pieces), Directions),
-    display_directions(Directions),
+    write('Select a direction to move the piece: (up, down, left, and right'), nl,
     read(Direction),
-    validate_movement_action(Player, Board, Row, Col, Direction, IsValid),
-    handle_direction_validation(IsValid, Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, Direction, UpdatedPieces, NewMovesLeft).
-
-% Display available directions
-display_directions([]) :-
-    write('No valid directions available.'), nl.
-display_directions([Dir|Dirs]) :-
-    write('- '), write(Dir), nl,
-    display_directions(Dirs).
+    % validate_movement_action(Player, Board, Row, Col, Direction, IsValid),
+    %handle_direction_validation(IsValid, Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, Direction, UpdatedPieces, NewMovesLeft).
+    move(game_state(Board, Pieces, Player, move, MovesLeft), move(movement, piece(Player, Row, Col, Position), Direction), game_state(Board, UpdatedPieces, Player, move, NewMovesLeft)).
 
 % Handle validation for movement direction
 handle_direction_validation(true, Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, Direction, game_state(Board, UpdatedPieces, Player, move, NewMovesLeft)) :-
-    move_piece(game_state(Board, Pieces, Player, move, MovesLeft), piece(Player, Row, Col, Position), [Direction], game_state(Board, UpdatedPieces, Player, move, NewMovesLeft)).
+    move(game_state(Board, Pieces, Player, move, MovesLeft), move(movement, piece(Player, Row, Col, Position), Direction), game_state(Board, UpdatedPieces, Player, move, NewMovesLeft)).
 
 handle_direction_validation(false, Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, _, game_state(Board, Pieces, Player, move, MovesLeft)) :-
-    write('Invalid move. Try again.'), nl,
-    prompt_movement_action(Player, piece(Player, Row, Col, Position), Pieces, Board, MovesLeft, game_state(Board, Pieces, Player, move, MovesLeft)).
+    write('Invalid move. Try again.'), nl.
 
 

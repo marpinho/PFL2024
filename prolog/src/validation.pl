@@ -15,11 +15,6 @@ valid_square(Board, Player, Row, Col, Position, Pieces) :-
     square_accessible(Disc, Player, Position),   % Check if the Position is accessible
     \+ piece_occupying_position(Pieces, Row, Col, Position).  % Ensure no piece is occupying the position.
 
-% piece_occupying_position(+Pieces, +Row, +Col, +Position)
-% Checks if there is a piece occupying the given position.
-piece_occupying_position(Pieces, Row, Col, Position) :-
-    member(piece(_, Row, Col, Position), Pieces).
-
 % square_accessible(+Disc, +Player, +Position)
 % Checks if the given position on the disc is accessible to the player.
 square_accessible(disc(Position1, _, _, _), Player, topLeft) :-
@@ -34,22 +29,14 @@ square_accessible(disc(_, _, _, Position4), Player, bottomRight) :-
 % accessible(+SquareType, +Player)
 % Determines if a square type is accessible to the player.
 accessible(neutral, _).                     % Neutral squares are accessible to all players.
-accessible(player1Exclusive, Player1).      % Exclusive squares for Player1.
-accessible(player2Exclusive, Player2).      % Exclusive squares for Player2.
+accessible(player1Exclusive, player1).      % Exclusive squares for Player1.
+accessible(player2Exclusive, player2).      % Exclusive squares for Player2.
 accessible(_, _) :- fail.                   % Other types are inaccessible.
 
-% section_blossom_type(+Section, +TL, +TR, +BL, +BR, -BlossomType)
-section_blossom_type(topLeft, TL, _, _, _, TL).
-section_blossom_type(topRight, _, TR, _, _, TR).
-section_blossom_type(bottomLeft, _, _, BL, _, BL).
-section_blossom_type(bottomRight, _, _, _, BR, BR).
-
-% valid_bl_type(+Player, +BlossomType)
-valid_bl_type(player1, neutral).
-valid_bl_type(player1, player1Exclusive).
-valid_bl_type(player2, neutral).
-valid_bl_type(player2, player2Exclusive).
-valid_bl_type(_, inaccessible) :- fail.  % Prevent movement to inaccessible squares.
+% piece_occupying_position(+Pieces, +Row, +Col, +Slot)
+% Checks if a piece occupies the specified position.
+piece_occupying_position(Pieces, Row, Col, Slot) :-
+    member(piece(_, Row, Col, Slot), Pieces).
 
 /* ROTATION */
 
@@ -64,9 +51,15 @@ valid_rotation_moves(movePiece, []). % No rotations allowed during the movePiece
 
 % Validate starting position
 validate_starting_position(Player, Board, Row, Col, Position, Pieces, true) :-
+    player_row(Player, RequiredRow),                    % Get the required row for the player
+    Row = RequiredRow,                                  % Ensure the row matches the player starting row
     valid_square(Board, Player, Row, Col, Position, Pieces).
 validate_starting_position(_, _, _, _, _, _, false).
-% Validate starting position
+
+% player_row(+Player, -Row)
+% Defines the required row for each player.
+player_row(player1, 1). % Player 1 starts in row 1.
+player_row(player2, 4). % Player 2 starts in row 4.
 
 /* MOVE A PLACED PIECE */
 
@@ -112,3 +105,8 @@ adjacent_position(bottomRight, Row, Col, up, topLeft, Row, Col).  % Move to topL
 adjacent_position(bottomRight, _, _, down, none, _, _).  % No valid move downwards from bottomRight.
 
 
+% piece_on_board(+Row, +Col)
+% Ensures the piece is already placed on the board (i.e., not unplaced).
+piece_on_board(Row, Col) :-
+    Row \= none,
+    Col \= none.

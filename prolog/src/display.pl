@@ -80,10 +80,10 @@ piece_on_square(_, _, _, _, '').  % Default case if no piece is found.
 % 1.3- Square Representations
 
 % square_representation(+BlossomType, -Representation)
-square_representation(neutral, '  N  ').
-square_representation(inaccessible, '  X  ').
-square_representation(player1Exclusive, ' E-1 ').
-square_representation(player2Exclusive, ' E-2 ').
+square_representation('N', '  N  ').
+square_representation('X', '  X  ').
+square_representation('E-1', ' E-1 ').
+square_representation('E-2', ' E-2 ').
 
 % piece_representation(+PlayerPiece, -Representation)
 piece_representation(player1, ' P-1 ').

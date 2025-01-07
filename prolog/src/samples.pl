@@ -29,34 +29,16 @@ sample_board([
 ]).
 
 sample_pieces([
-    piece(player1, 1, 1, topLeft),
-    piece(player2, 2, 2, bottomRight)
+    piece(player1, 1, 2, topLeft),
+    piece(player2, 1, 3, bottomRight),
+    piece(player1, 2, 1, topRight),
+    piece(player2, 2, 4, bottomLeft),
+    piece(player1, none, none, none) % Unplaced piece
 ]).
 
-% Generate a 4x4 board with randomized disks
-generate_board(Board) :-
-    findall(Disk, (between(1, 16, _), random_disk(Disk)), FlatBoard),
-    partition(4, FlatBoard, Board).
-
-% Randomly generate a disk with accessible and inaccessible slots
-random_disk([Slot1, Slot2, Slot3, Slot4]) :-
-    random_member(Slot1, [player1Exclusive, player2Exclusive, neutral, inaccessible]),
-    random_member(Slot2, [player1Exclusive, player2Exclusive, neutral, inaccessible]),
-    random_member(Slot3, [player1Exclusive, player2Exclusive, neutral, inaccessible]),
-    random_member(Slot4, [player1Exclusive, player2Exclusive, neutral, inaccessible]).
-
-% Partition a flat list into a 4x4 board
-partition(_, [], []).
-partition(Size, List, [Row|Rest]) :-
-    length(Row, Size),
-    append(Row, Tail, List),
-    partition(Size, Tail, Rest).
-
-% Initialize player pieces
-initialize_pieces([Player1Pieces, Player2Pieces]) :-
-    initialize_player_pieces(player1, Player1Pieces),
-    initialize_player_pieces(player2, Player2Pieces).
-
-initialize_player_pieces(Player, Pieces) :-
-    length(Pieces, 5),
-    maplist(=(piece(Player, none, none, none)), Pieces).
+sample_board2([
+    [disc('N', 'X', 'E-1', 'E-2'), disc('E-1', 'N', 'X', 'E-2'), disc('E-2', 'X', 'N', 'E-1'), disc('X', 'E-2', 'E-1', 'N')],
+    [disc('N', 'E-1', 'E-2', 'X'), disc('X', 'E-2', 'N', 'E-1'), disc('E-2', 'X', 'N', 'E-1'), disc('N', 'X', 'E-2', 'E-1')],
+    [disc('E-1', 'X', 'N', 'E-2'), disc('N', 'E-2', 'E-1', 'X'), disc('X', 'N', 'E-2', 'E-1'), disc('E-1', 'E-2', 'X', 'N')],
+    [disc('X', 'N', 'E-1', 'E-2'), disc('E-2', 'E-1', 'X', 'N'), disc('N', 'X', 'E-1', 'E-2'), disc('E-1', 'E-2', 'N', 'X')]
+]).
