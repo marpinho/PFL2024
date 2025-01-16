@@ -100,33 +100,8 @@ Predicates:
 
 Sample Board:
 
- Player 1 field
+![image](https://github.com/user-attachments/assets/966407da-1a1a-4e56-ad25-a45a92f2fb5a)
 
-       1         2         3         4
-  +---------+---------+---------+---------+
-  |  B   N  |      B  |  B   O  |  O   N  |
- 1|    +    |    +    |    +    |    +    |
-  |      O  |  N   O  |      N  |      B  |
-  +---------+---------+---------+---------+
-  |      O  |  N   B  |  N   O  |      O  |
- 2|    +    |    +    |    +    |    +    |
-  |  N   B  |      O  |  B      |  N   B  |
-  +---------+---------+---------+---------+
-  |  O      |  O   N  |      N  |  N      |
- 3|    +    |    +    |    +    |    +    |
-  |  B   N  |      B  |  O   B  |  B   O  |
-  +---------+---------+---------+---------+
-  |  N   B  |      O  |      N  |  B      |
- 4|    +    |    +    |    +    |    +    |
-  |  O      |  B   N  |  B   O  |  N   O  |
-  +---------+---------+---------+---------+
-
- Player 2 field
-
- N - Neutral 
- X - Inaccessible 
- O - Player 1 exclusive 
- B - Player 2 exclusive 
 
 Pieces representation:
 Player1 -o-
