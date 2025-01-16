@@ -1,48 +1,86 @@
+:- [validation].
 
-/*
-* display_game(+GameState)
- The game display prints the board and a simple caption. The board is printed row by row, recursively.
-*/
-display_game(game_state(Board, Pieces, CurrentPlayer, CurrentPhase, RemainingMoves)) :-
+% display_game(+GameState)
+% Displays the current state of the game.
+display_game(game_state(Board, Pieces, CurrentPlayer, Opponent, NumberOfMoves)) :-
     nl,
-    format('Current Player: ~w~n', [CurrentPlayer]),  
-    format('Current Phase: ~w~n', [CurrentPhase]),  % Display the current phase (rotate or move)
-    format('Remaining Moves: ~d~n', [RemainingMoves]),  % Display the number of remaining moves
-    nl, display_board(Board, Pieces, 1),
-    write('+------+------+------+------+------+------+------+------+'), nl, % Board
-    display_unplaced_pieces(Pieces),  % Print unplaced pieces after the board
-    nl, write(' N  - Neutral Square'), nl, write(' X  - Inaccessible Square'), nl,
-    write(' E1 - Player 1 exclusive Square'), nl, write(' E2 - Player 2 exclusive Square'), nl,
-    write(' P1 - Player 1 piece'), nl, write(' P2 - Player 2 piece'), nl, nl.
-
-% display_unplaced_pieces(+Pieces)
-display_unplaced_pieces(Pieces) :-
-    count_unplaced_pieces(Pieces, player1, Player1Count),
-    count_unplaced_pieces(Pieces, player2, Player2Count),
-    format(' Unplaced Player 1 pieces: ~d~n', [Player1Count]),
-    format(' Unplaced Player 2 pieces: ~d~n', [Player2Count]).
-% count_unplaced_pieces(+Pieces, +Player, -Count)
-count_unplaced_pieces(Pieces, Player, Count) :-
-    findall(Player, member(piece(Player, none, none, none), Pieces), UnplacedPieces),
-    length(UnplacedPieces, Count).
+    display_pieces(Pieces, CurrentPlayer, Opponent),nl,nl,
+    write(' Player 1 field'), nl, nl,
+    display_board(Board, Pieces), nl,
+    write(' Player 2 field'), nl, nl,
+    display_legend, nl,
+    display_phase(NumberOfMoves, CurrentPlayer).
 
 
-% display_board(+Board, +Pieces, +RowIndex)
-display_board([], _, _) :- % Base Case: all rows printed (empty board)
-    !.
-display_board([Row|Board], Pieces, RowIndex) :- % Recursive Step: print row, print board excluding row
-    write('+------+------+------+------+------+------+------+------+'), nl,
-    display_disc_row(Row, Pieces, RowIndex, 1, top), 
+/*PHASES*/
+
+display_phase(NumberOfMoves, Player):-
+    infer_phase(NumberOfMoves, Phase),
+    piece_representation(Player, Piece),
+    format('Current Player: ~w ~w~n', [Player, Piece]),
+    format('Current Phase: ~w~n', [Phase]), 
+    format('Remaining Moves: ~d~n', [NumberOfMoves]), nl.
+
+% infer_phase(+NumberOfMoves, -Phase)
+% Infers the current phase of the game based on the number of moves.
+infer_phase(4, 'Rotation').
+infer_phase(NumberOfMoves, 'Placement/Movement') :- NumberOfMoves < 4.
+
+
+/*PIECES*/
+
+% display_pieces(+Pieces, +CurrentPlayer, +Opponent)
+% Displays the number of unplaced pieces for each player.
+display_pieces(Pieces, CurrentPlayer, Opponent) :-
+    display_player_pieces(Pieces, CurrentPlayer),
+    display_player_pieces(Pieces, Opponent).
+
+% display_player_pieces(+Pieces, +Player)
+% Displays the number of unplaced and crossed pieces for the specified player.
+display_player_pieces(Pieces, Player) :-
+    piece_representation(Player, Piece),
+    count_crossed_pieces(Pieces, Player, Crossed),
+    count_unplaced_pieces(Pieces, Player, Unplaced),
+    format(' ~w ~w  ', [Player, Piece]), nl,
+    format(' No. pieces that crossed the field: ~d', [Crossed]),nl,
+    format(' No. unplaced pieces: ~d', [Unplaced]),nl.
+
+
+/*BOARD*/
+
+% display_board(+Board, +Pieces)
+% Displays the current state of the board and the pieces.
+display_board(Board, Pieces):-
+    write('       1         2         3         4'), nl,
+    write('  +---------+---------+---------+---------+'), nl,
+    print_board(Board, Pieces).
+
+% print_board(+Board, +Pieces)
+% Prints the board.
+print_board(Board, Pieces):-
+    print_board_row(Board, Pieces, 1).
+
+% print_board_row(+Board, +Pieces, +RowIndex)
+% Print the board row by row.
+print_board_row([], _, _) :- !.
+print_board_row([Row|Rest], Pieces, RowIndex) :- 
+    write('  '),  
+    display_disc_row(Row, Pieces, RowIndex, 1, top),
+    format(' ~w|    +    |    +    |    +    |    +    |', [RowIndex]), nl,
+    write('  '),
     display_disc_row(Row, Pieces, RowIndex, 1, bottom), % Each row occupies two lines in the output, that must be printed separately
-    NextRow is RowIndex + 1, display_board(Board, Pieces, NextRow).
+    write('  +---------+---------+---------+---------+'), nl,
+    NewRowIndex is RowIndex + 1,
+    print_board_row(Rest, Pieces, NewRowIndex).
 
 % display_disc_row(+Row, +Pieces, +RowIndex, +ColIndex, +Half)
 display_disc_row([], _, _, _, _) :- % Base Case: no more squares, move to next line/row
     write('|'), nl.
 display_disc_row([Disc|Rest], Pieces, RowIndex, ColIndex, Half) :- % Recursive Step: print the top or bottom half of a disk
     write('| '),
-    print_disc_section(Disc, Pieces, RowIndex, ColIndex, Half),  % Since we need to diferentiate between the Top and the Bottom sections, we need to encapsulate the printing itself in a new predicate
-    NewColIndex is ColIndex + 1, display_disc_row(Rest, Pieces, RowIndex, NewColIndex, Half).
+    print_disc_section(Disc, Pieces, RowIndex, ColIndex, Half), % Print the current disc section (top/bottom).
+    NewColIndex is ColIndex + 1,
+    display_disc_row(Rest, Pieces, RowIndex, NewColIndex, Half). % Recurse to the next disc.
 
 % print_disc_section(+Disc, +Pieces, +Row, +Col, +Half)
 print_disc_section(disc(TL, TR, _, _), Pieces, Row, Col, top) :- % Top-Half of the disk
@@ -54,43 +92,35 @@ print_disc_section(disc(_, _, BL, BR), Pieces, Row, Col, bottom) :- % Bottom-Hal
     format_disc_square(BR, Row, Col, bottomRight, Pieces, Right),
     format('~w ~w ', [Left, Right]).  % Print the formatted values.
 
-% format_disc_square(+Type, +Row, +Col, +Square, +Pieces, -Output)
-format_disc_square(Type, Row, Col, Square, Pieces, Output) :- % Identifies the correct string to print
-    format_disc_square_piece(Row, Col, Square, Pieces, Output); % If a piece is in the square it will take precedence
-    format_disc_square_blossom(Type, Row, Col, Square, Pieces, Output).
-
-% format_disc_square_piece(+Row, +Col, +Square, +Pieces, -Output)
-format_disc_square_piece(Row, Col, Square, Pieces, Output) :-
-    piece_on_square(Pieces, Row, Col, Square, Player),
-    Player \= '',  % The empty string indicates that the piece isnt present
-    piece_representation(Player, Output).
-
-% format_disc_square_blossom(+Type, +Row, +Col, +Square, +Pieces, -Output)
-format_disc_square_blossom(Type, _, _, _, Pieces, Output) :-
-    piece_on_square(Pieces, _, _, _, ''),  % Pieces take precedence
+format_disc_square(_, Row, Col, Square, Pieces, Output) :-
+    member(piece(Player, Row, Col, Square), Pieces),!,
+    piece_representation(Player, Output). % Match found.
+format_disc_square(Type, _, _, _, _, Output) :-
     square_representation(Type, Output).
 
-% piece_on_square(+Pieces, +Row, +Col, +Square, -Player)
-piece_on_square(Pieces, Row, Col, Square, Player) :-
-    member(piece(Player, Row, Col, Square), Pieces),
-    !.  % Stop after finding the first match.
-piece_on_square(_, _, _, _, '').  % Default case if no piece is found.
-
-
-% 1.3- Square Representations
-
 % square_representation(+BlossomType, -Representation)
-square_representation('N', '  N  ').
-square_representation('X', '  X  ').
-square_representation('E-1', ' E-1 ').
-square_representation('E-2', ' E-2 ').
+% Maps square types to their visual representation.
+square_representation(n, ' N ').
+square_representation(x, '   ').
+square_representation(e1, ' O ').
+square_representation(e2, ' B ').
 
 % piece_representation(+PlayerPiece, -Representation)
-piece_representation(player1, ' P-1 ').
-piece_representation(player2, ' P-2 ').
-piece_representation('', '     ').  % Empty square
+% Maps player pieces to their visual representation.
+piece_representation(player1, '-o-').
+piece_representation(computer1-_, '-o-').
+piece_representation(player2, '-b-').
+piece_representation(computer2-_, '-b-').
+piece_representation('', '   ').  % Empty square
 
 
+% display_legend
+% Displays the legend for square and piece types.
+display_legend :-
+    write(' N - Neutral '), nl,
+    write(' X - Inaccessible '), nl,
+    write(' O - Player 1 exclusive '), nl,
+    write(' B - Player 2 exclusive '),nl.
 
 
-
+  

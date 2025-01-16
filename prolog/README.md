@@ -1,16 +1,30 @@
-## Game Details
+## Identification
+Group: Blütentanz_5	
+
+| Name                | UP ID     | Contribution    |
+| ------------------- | --------- | --------------- |
+| Guilherme Magalhães | 202005285 | 50%             |
+| Margarida Pinho     | 201704599 | 50%             |
+
+## Installation and Execution
+
+Install SICStus Prolog 4.9 
+Load the main file: [src/game].
+Start the game by entering: play.
+
+## Description of the game
 
 - in *Blütentanz*, you want to lead your figures to reach your opponent's side of the field.
 
 - To set up the game, sixteen discs are placed onto the game board at random; Each disc has 4 slots:
-    - blue, only accessible to the Blue Player
-    - orange, only accessible to the Orange Player
-    - gray, accessible to both Players
+    - B, only accessible to Player2
+    - O, only accessible to Player1
+    - N, accessible to both Players
     - null, innacessible to both Players
 
 - Your goal is to move four of your five figures off the edge of the game board near your opponent. Whoever does this first wins.
 
-On a turn each player must:
+Players take turns performing two actions:
 - First choose a row or column and rotate all its tiles 90º, with any player figures on those tiles rotating as well.
 - Next, you have up to three movement points that you can use on 1-3 of your figures. You can:
     - place a figure on the accessible places of your edge of the board. 
@@ -18,35 +32,108 @@ On a turn each player must:
 
 More details are available in [Board Game Geek](https://boardgamegeek.com/boardgame/428363/blutentanz). No extra installations are required.
 
+## Considerations for Game Extensions
+- The code is designed to handle different board dimensions by adjusting the generate_board/1 and related predicates.
+- Simplified rules for beginners could limit the number of rotations or movements per turn.
+- Advanced rules might add new tile types or movement constraints.
+- Player names, board sizes, and AI difficulty levels could be configured through the game menu.
 
+## Game Logic
 
+Game configuration: 
+- represented using game_state/5: Holds the board, pieces, current player, opponent, and remaining moves.
+- Example initial state: game_state(Board, Pieces, player1, player2, 4).
 
-## Game State Representation
-A Board is a list of 16 independent Disks organized in a 4x4 square. These disks have four positions (which we refer to as squares in the code, even though a disk is circular): Top Left, Top Right, Bottom Left, Bottom Right. The disks can rotate 90º clockwise, shuffling the order of its squares.
+Internal game state representation:
+- Board: A 4x4 grid of disc(TL, TR, BL, BR) where each position can be a neutral, inaccessible, or player-exclusive square.
+- Pieces: List of piece(Player, Row, Col, Pos) representing each player's pieces and their positions.
+- Players: player1, player2, or AI variants (computer1-Level, computer2-Level).
 
-Each square in a Disk features a blossom, which controls which players can move pieces there. There is one unavalable square, one reserved for each player and another one available for both.
+Move Representation:
+- move(rotate_row, Index)
+- move(place_piece, Row, Col, Pos)
+- move(move_piece, Row, Col, Pos, Direction)
 
-Each player has five pieces. The game stores the following information regarding pieces:
-- Player
-- Disk (Row and Column)
-- Square (Top Left, Top Right, Bottom Left, Bottom Right)
+User Interaction:
+- Game modes (e.g., Human vs AI) and AI levels are selected through prompts
+- Input validation ensures valid moves and configurations.
 
-More pieces could be added without breaking the game. Unnused pieces have their position marked as 'none' and pieces that reach the opponent's side of the board are ...
+Predicates:
 
-The game state also includes turn information:
-- the currently active Player
-- the phase of his turn (rotate or move piece)
-- the remaining moves (only relevant when in 'move piece' phase)
+- play/0 - The entry point of the game. 
+    - It prompts the user to select the game mode and initializes the game state using initial_state/2. The game loop (start/1) manages the flow of turns.
 
-## Move Representation
-Moves are stored as move([type], [details]),  There are two types of moves:
-- rotations which can be applied to rows and columns, on a given index. An example of a rotation is move(rotation, row(2)), which applies to the second row in the board.
-- piece movements, issue!
+- initial_state(+GameConfig, -GameState) 
+    - Initializes the game based on the chosen configuration
+    - Generates a random board using generate_board/1
+    - Initializes player pieces using initialize_pieces/3.
+    - Sets the initial game state.
 
-## User Interaction
-WIP
+- display_game(+GameState)
+    - Displays the current state of the game, including: the board with pieces and discs; the current player's turn and phase; the number of remaining moves.
+    - Implemented using modular predicates such as display_board/2 and display_pieces/2.
 
-| Name                | UP ID     | Contribution    |
-| ------------------- | --------- | --------------- |
-| Guilherme Magalhães | 202005285 | 50%             |
-| Margarida Pinho     | 201704599 | 50%             |
+- move(+GameState, +Move, -NewGameState)
+    - Handles move execution by updating the game state based on the move type: Rotations are performed using rotate_row/4 or rotate_column/4; Piece placement is handled with place_piece/7; Piece movement is validated and executed using move_piece/8.
+
+- valid_moves(+GameState, -ListOfMoves)
+    - Generates all valid moves for the current player
+    - During the rotation phase, all row and column rotations are valid.
+    - During the placement/movement phase, valid moves include piece placements and movements.
+
+- game_over(+GameState, -Winner)
+    - Determines if the game is over and identifies the winner
+    - The current player wins if they move 4 pieces off the opponent's edge.
+    - The opponent wins if the current player has no valid moves.
+
+- value(+GameState, +Player, -Value)
+    - Assigns a heuristic value to the game state for the specified player:
+    - Pieces closer to the opponent's edge are valued higher.
+    - Pieces that have crossed the board are given maximum value.
+
+- choose_move(+GameState, +Level, -Move)
+    - Selects a move for AI players
+    - Level 1: randomly selects a valid move from the list of possible moves generated by the valid_moves/2 predicate.
+    - Level 2: Evaluates moves using value/3. The evaluation prioritizes pieces closer to the opponent's edge of the board and moves that maximize strategic advantages for the AI. After scoring all moves, the AI selects the move with the highest value.
+
+## Illustrations
+
+Sample Board:
+
+ Player 1 field
+
+       1         2         3         4
+  +---------+---------+---------+---------+
+  |  B   N  |      B  |  B   O  |  O   N  |
+ 1|    +    |    +    |    +    |    +    |
+  |      O  |  N   O  |      N  |      B  |
+  +---------+---------+---------+---------+
+  |      O  |  N   B  |  N   O  |      O  |
+ 2|    +    |    +    |    +    |    +    |
+  |  N   B  |      O  |  B      |  N   B  |
+  +---------+---------+---------+---------+
+  |  O      |  O   N  |      N  |  N      |
+ 3|    +    |    +    |    +    |    +    |
+  |  B   N  |      B  |  O   B  |  B   O  |
+  +---------+---------+---------+---------+
+  |  N   B  |      O  |      N  |  B      |
+ 4|    +    |    +    |    +    |    +    |
+  |  O      |  B   N  |  B   O  |  N   O  |
+  +---------+---------+---------+---------+
+
+ Player 2 field
+
+ N - Neutral 
+ X - Inaccessible 
+ O - Player 1 exclusive 
+ B - Player 2 exclusive 
+
+Pieces representation:
+Player1 -o-
+Player2 -b-
+
+## Bibliography
+1. SICStus Prolog Documentation: https://sicstus.sics.se/sicstus/docs/latest4/html/sicstus.html
+2. Coding Guidelines for Prolog: https://arxiv.org/pdf/0911.2899
+3. Blütentanz Rules: https://boardgamegeek.com/boardgame/428363/blutentanz
+
